@@ -1,7 +1,7 @@
 import numpy
 import plot
 
-def MyDBSCAN(points, eps, minPts, collectWaypoints=True, labels=[]):
+def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, collectWaypoints=True, labels=[]):
     clusterID = 1
     if(len(labels) == 0): labels = [0] * len(points)
 
@@ -39,14 +39,14 @@ def MyDBSCAN(points, eps, minPts, collectWaypoints=True, labels=[]):
                 values = nBCounts.values()
                 mean = sum(nBCounts.values()) / len(values)
                 for index, nBCount in nBCounts.items():
-                    if nBCount < mean/2:
+                    if nBCount < mean * connectionDensityFactor:
                         possibleWaypoints.append(points[index])
                         possibleWaypointIndizes.append(index)
             clusterID += 1
 
     if collectWaypoints:
         # Cluster Possible Waypoints and remove outlier
-        waypointLabels = MyDBSCAN(possibleWaypoints, eps, minPts, False)
+        waypointLabels = MyDBSCAN(possibleWaypoints, eps, minPts, collectWaypoints=False)
 
         waypointClusters = {}
         for i in range(len(possibleWaypoints)):
@@ -62,7 +62,7 @@ def MyDBSCAN(points, eps, minPts, collectWaypoints=True, labels=[]):
                 else: preLabels.append(0)
             for i in waypointCluster: preLabels[i] = -2
 
-            newLabels = MyDBSCAN(points, eps, minPts, False, preLabels)
+            newLabels = MyDBSCAN(points, eps, minPts, collectWaypoints=False, labels=preLabels)
             if(max(newLabels) > max(labels)):
                 labels = newLabels
     return labels

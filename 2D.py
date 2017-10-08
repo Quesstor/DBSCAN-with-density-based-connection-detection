@@ -16,12 +16,12 @@ c3 = generatePoints(1,1)
 outlier = np.array([(-5,0),(0,5)])
 
 waypoints1 = [(x,x) for x in np.arange(1, 5, 0.2)]
-waypoints2 = [(x,pow(x,3)) for x in np.arange(-1.5, 1.5, 0.041)]
+waypoints2 = [(x,pow(x,3)) for x in np.arange(-1.5, 1.5, 0.1)]
 
 points = np.concatenate([c1, c2,  waypoints2 ])
 #points = np.load("data.npy")
 
-labels = dbscan.MyDBSCAN(points, eps=.3, minPts=3)
+labels = dbscan.MyDBSCAN(points, eps=1, minPts=3)
 plot.plot(points, labels)
 print("done")
 
