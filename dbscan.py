@@ -38,7 +38,7 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                 mean = sum(nBCountsOfClusterPoints.values()) / len(nBCountsOfClusterPoints)
                 possibleWaypointIndizes = [i for i in clusterIndizes if nBCountsOfClusterPoints[i] < mean * connectionDensityFactor]
 
-                # Cluster Possible Waypoints and remove outlier
+                # Cluster Possible Waypoints
                 waypointLabels = MyDBSCAN([points[i] for i in possibleWaypointIndizes], eps, minPts, detectWaypoints=False)
 
                 waypointClusters = {}
@@ -48,8 +48,11 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                     waypointClusters[waypointLabels[i]].append(possibleWaypointIndizes[i])
 
                 newClustersCount = 1 #default 1 as the whole cluster is one cluster
-                plot.plot(points, labels, title="Basic DBScan (outlier have different color)")
+                #plot.plot(points, [-1 if i==0 else i for i in labels], title="Basic DBScan")
                 for waypointCluster in waypointClusters.values():
+                    plot.plot([points[i] for i in clusterIndizes],
+                              [-2 if i in waypointCluster else clusterID for i in clusterIndizes],
+                              title="WaypointCluster to remove")
                     # prelabel Waypoints and check if a new Cluster emerges
                     preLabels = []
                     for i in range(len(clusterIndizes)):
@@ -65,7 +68,7 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                                 labels[clusterIndizes[i]] = clusterID + newLabels[i] - 1
                             if newLabels[i] < 0: labels[clusterIndizes[i]] = -2 #is indeed a waypoint or a new outlier -> waypoint
 
-                        plot.plot(points, labels, title="After removing one waypoint cluster")
+                        plot.plot([points[i] for i in clusterIndizes], newLabels, title="After removing waypoint cluster")
                 clusterID += newClustersCount -1
             clusterID += 1
     return labels

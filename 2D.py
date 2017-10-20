@@ -16,14 +16,14 @@ test3 = np.concatenate([generatePoints(5,0), generatePoints(0,0),generatePoints(
                         [(x,x) for x in np.arange(0, 8, 0.2)], [(x,0) for x in np.arange(0, 5, 0.2)],
                         generatePoints(5,5,5,100)])
 
-outlier = np.array([(-5,0),(0,5)])
+outlier = np.array([(0,0),(0,5)])
 
 test = np.concatenate([test3,outlier])
 
 #np.save("data", test)
 test = np.load("data.npy")
 labels = dbscan.MyDBSCAN(test, eps=.5, minPts=3)
-plot.plot(test, labels, True)
+plot.plot(test, labels, False)
 print("done")
 
 
