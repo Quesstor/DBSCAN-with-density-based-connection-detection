@@ -11,11 +11,13 @@ def clusterColor(i, labelCount):
     norm = Normalize(vmin=1, vmax=labelCount+3)
     return cm.rainbow(norm(i))
 
-def plot(points, labels):
+def plot(points, labels, writeIndex=False):
     labelsCount = max(labels)
 
     colors = [clusterColor(i,labelsCount) for i in labels]
     matplotlib.pyplot.scatter([x for x,y in points],[y for x,y in points], color=colors)
+    if writeIndex:
+        for i,p in enumerate(points): matplotlib.pyplot.annotate(i, (p[0], p[1]))
 
     red_patch = mpatches.Patch(color='red', label='Connecting points')
     black_patch = mpatches.Patch(color='black', label='Noise')
