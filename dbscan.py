@@ -19,14 +19,11 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
             i = 0
             while i < len(NeighborPts):
                 neighborIndex = NeighborPts[i]
-                if labels[neighborIndex] == -1:
-                    labels[neighborIndex] = clusterID
-
-                elif labels[neighborIndex] == 0:
+                if labels[neighborIndex] == 0 or labels[neighborIndex] == -1:
                     labels[neighborIndex] = clusterID
                     PnNeighborPts = regionQuery(points, neighborIndex, eps, labels)
+                    nBCountsOfClusterPoints[neighborIndex] = len(PnNeighborPts)
                     if len(PnNeighborPts) >= minPts:
-                        nBCountsOfClusterPoints[neighborIndex] = len(PnNeighborPts)
                         NeighborPts = NeighborPts + PnNeighborPts
                 i += 1
 
@@ -48,7 +45,7 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                     waypointClusters[waypointLabels[i]].append(possibleWaypointIndizes[i])
 
                 newClustersCount = 1 #default 1 as the whole cluster is one cluster
-                #plot.plot(points, [-1 if i==0 else i for i in labels], title="Basic DBScan")
+                plot.plot(points, [-1 if i==0 else i for i in labels], title="Basic DBScan")
                 for waypointCluster in waypointClusters.values():
                     plot.plot([points[i] for i in clusterIndizes],
                               [-2 if i in waypointCluster else clusterID for i in clusterIndizes],
