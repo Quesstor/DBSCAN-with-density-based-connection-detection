@@ -48,6 +48,7 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                     waypointClusters[waypointLabels[i]].append(possibleWaypointIndizes[i])
 
                 newClustersCount = 1 #default 1 as the whole cluster is one cluster
+                plot.plot(points, labels, title="Basic DBScan (outlier have different color)")
                 for waypointCluster in waypointClusters.values():
                     # prelabel Waypoints and check if a new Cluster emerges
                     preLabels = []
@@ -58,10 +59,13 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                     newLabels = MyDBSCAN([points[i] for i in clusterIndizes], eps, minPts, detectWaypoints=False, labels=preLabels)
                     newClustersCount = max(newLabels)
                     if (newClustersCount > 1): #a new cluster is found
+                        print("new Cluster found after removing "+str(waypointCluster))
                         for i in range(len(newLabels)):
                             if newLabels[i] > 1 : #is point of the new cluster
                                 labels[clusterIndizes[i]] = clusterID + newLabels[i] - 1
                             if newLabels[i] < 0: labels[clusterIndizes[i]] = -2 #is indeed a waypoint or a new outlier -> waypoint
+
+                        plot.plot(points, labels, title="After removing one waypoint cluster")
                 clusterID += newClustersCount -1
             clusterID += 1
     return labels

@@ -8,10 +8,10 @@ def clusterColor(i, labelCount):
     if i==-3: i = labelCount+3 #Test
     if i==-2: return "red" #Waypoints
     if i==-1: return "black" #Outlier
-    norm = Normalize(vmin=1, vmax=labelCount+3)
+    norm = Normalize(vmin=0, vmax=labelCount+3)
     return cm.rainbow(norm(i))
 
-def plot(points, labels, writeIndex=False):
+def plot(points, labels, writeIndex=False, title =""):
     labelsCount = max(labels)
 
     colors = [clusterColor(i,labelsCount) for i in labels]
@@ -23,6 +23,7 @@ def plot(points, labels, writeIndex=False):
     black_patch = mpatches.Patch(color='black', label='Noise')
     plt.legend(handles=[red_patch, black_patch])
 
+    matplotlib.pyplot.title(title)
     matplotlib.pyplot.show()
     return
 
