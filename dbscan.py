@@ -57,8 +57,8 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                         else: preLabels.append(0)
 
                     newLabels = MyDBSCAN([points[i] for i in clusterIndizes], eps, minPts, detectWaypoints=False, labels=preLabels)
-                    newClustersCount = max(newLabels)
-                    if (newClustersCount > 1): #a new cluster is found
+                    if (max(newLabels) > newClustersCount): #a new cluster is found
+                        newClustersCount = max(newLabels)
                         print("new Cluster found after removing "+str(waypointCluster))
                         for i in range(len(newLabels)):
                             if newLabels[i] > 1 : #is point of the new cluster
