@@ -81,7 +81,6 @@ def removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndize
                 newClustersFound += 1
                 numberOfClustersToRemove = 1
                 startIndex = 0
-                print("Found: " + str(keys))
                 for k in keys: remainingWaypointClusters.remove(k)
             else:
                 startIndex += 1
