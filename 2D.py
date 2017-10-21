@@ -13,8 +13,7 @@ test1 = np.concatenate([generatePoints(0,0), generatePoints(4,0), generatePoints
 test2 = np.concatenate([generatePoints(1.5,3), [(x,pow(x,3)) for x in np.arange(-1.5, 1.5, 0.1)], generatePoints(-1.5,-3)])
 
 test3 = np.concatenate([generatePoints(5,0), generatePoints(0,0),generatePoints(5,5), generatePoints(8,8),
-                        [(x,x) for x in np.arange(0, 8, 0.2)], [(x,0) for x in np.arange(0, 5, 0.2)], [(5,x) for x in np.arange(0, 5, 0.2)],
-                        generatePoints(5,5,5,100)])
+                        [(x,x) for x in np.arange(0, 8, 0.2)], [(x,0) for x in np.arange(0, 5, 0.2)], [(5,x) for x in np.arange(0, 5, 0.2)]])
 
 outlier = np.array([(0,0),(0,5)])
 
@@ -23,7 +22,7 @@ test = np.concatenate([test3, outlier])
 np.save("data", test)
 #test = np.load("data.npy")
 labels = dbscan.MyDBSCAN(test, eps=.5, minPts=3, debug=True)
-plot.plot(test, labels, False, "Final output")
+plot.plot(test, labels, False, "Final output", legend=True)
 print("done")
 
 
