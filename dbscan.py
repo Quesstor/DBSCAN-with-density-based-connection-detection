@@ -1,7 +1,7 @@
 import numpy
 import plot
 
-def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=True, labels=[]):
+def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=True, labels=[], debug = False):
     clusterID = 1
     if(len(labels) == 0): labels = [0] * len(points)
 
@@ -45,9 +45,9 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                     waypointClusters[waypointLabels[i]].append(possibleWaypointIndizes[i])
 
                 newClustersCount = 1 #default 1 as the whole cluster is one cluster
-                plot.plot(points, [-1 if i==0 else i for i in labels], title="Basic DBScan")
+                if debug: plot.plot(points, [-1 if i==0 else i for i in labels], title="Basic DBScan")
                 for waypointCluster in waypointClusters.values():
-                    plot.plot([points[i] for i in clusterIndizes],
+                    if debug: plot.plot([points[i] for i in clusterIndizes],
                               [-2 if i in waypointCluster else clusterID for i in clusterIndizes],
                               title="WaypointCluster to remove")
                     # prelabel Waypoints and check if a new Cluster emerges
@@ -59,13 +59,12 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                     newLabels = MyDBSCAN([points[i] for i in clusterIndizes], eps, minPts, detectWaypoints=False, labels=preLabels)
                     if (max(newLabels) > newClustersCount): #a new cluster is found
                         newClustersCount = max(newLabels)
-                        print("new Cluster found after removing "+str(waypointCluster))
                         for i in range(len(newLabels)):
                             if newLabels[i] > 1 : #is point of the new cluster
                                 labels[clusterIndizes[i]] = clusterID + newLabels[i] - 1
                             if newLabels[i] < 0: labels[clusterIndizes[i]] = -2 #is indeed a waypoint or a new outlier -> waypoint
 
-                        plot.plot([points[i] for i in clusterIndizes], newLabels, title="After removing waypoint cluster")
+                        if debug: plot.plot([points[i] for i in clusterIndizes], newLabels, title="After removing waypoint cluster")
                 clusterID += newClustersCount -1
             clusterID += 1
     return labels
