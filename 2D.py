@@ -16,9 +16,15 @@ test3 = np.concatenate([generatePoints(5,0), generatePoints(0,0),generatePoints(
                         [(x,x) for x in np.arange(0, 8, 0.2)], [(x,0) for x in np.arange(0, 5, 0.2)], [(5,x) for x in np.arange(0, 5, 0.2)],
                         generatePoints(5,5,5,100)])
 
+test4 = np.concatenate([
+    generatePoints(5, 0), generatePoints(5,3), generatePoints(5,6),
+    [(0, x) for x in np.arange(0, 6, 0.2)],[(5,x) for x in np.arange(0, 6, 0.2)],
+    [(x, 0) for x in np.arange(0, 5, 0.2)],[(x,3) for x in np.arange(0, 5, 0.2)],[(x,6) for x in np.arange(0, 5, 0.2)],
+    generatePoints(0, 0), generatePoints(0,3), generatePoints(0,6),
+])
 outlier = np.array([(0,0),(0,5)])
 
-test = np.concatenate([test3, outlier])
+test = np.concatenate([test4, outlier])
 
 np.save("data", test)
 #test = np.load("data.npy")

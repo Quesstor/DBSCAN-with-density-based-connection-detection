@@ -1,5 +1,6 @@
 import numpy
 import plot
+import itertools
 
 def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableWaypointDetection=True, labels=[], debug = False):
     clusterID = 1
@@ -67,12 +68,11 @@ def removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndize
     remainingWaypointClusters = [i for i in waypointClusters.keys()]
     numberOfClustersToRemove = 1
     while numberOfClustersToRemove <= len(remainingWaypointClusters):
-        startIndex = 0
-        while startIndex < len(remainingWaypointClusters):
+        combinations = [x for x in itertools.combinations(remainingWaypointClusters, numberOfClustersToRemove)]
+        combinationIndex = 0
+        while combinationIndex < len(combinations):
             if len(remainingWaypointClusters) == 0: break
-            keys = []
-            for i in range(0, numberOfClustersToRemove):
-                keys.append(remainingWaypointClusters[(startIndex + i) % len(remainingWaypointClusters)])
+            keys = combinations[combinationIndex]
 
             waypoints = []
             for k in keys: waypoints.extend(waypointClusters[k])
@@ -80,10 +80,11 @@ def removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndize
                                debug):
                 newClustersFound += 1
                 numberOfClustersToRemove = 1
-                startIndex = 0
                 for k in keys: remainingWaypointClusters.remove(k)
+                combinations = [x for x in itertools.combinations(remainingWaypointClusters, numberOfClustersToRemove)]
+                combinationIndex = 0
             else:
-                startIndex += 1
+                combinationIndex += 1
         numberOfClustersToRemove += 1
     return newClustersFound
 
