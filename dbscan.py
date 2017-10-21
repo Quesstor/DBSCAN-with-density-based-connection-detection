@@ -1,7 +1,7 @@
 import numpy
 import plot
 
-def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=True, labels=[], debug = False):
+def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableWaypointDetection=True, labels=[], debug = False):
     clusterID = 1
     if(len(labels) == 0): labels = [0] * len(points)
 
@@ -27,33 +27,40 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, detectWaypoints=T
                         NeighborPts = NeighborPts + PnNeighborPts
                 i += 1
 
-
-            if detectWaypoints:
-                if debug: plot.plot(points, [-1 if i == 0 else i for i in labels],
-                                    title="Basic DBScan detected a cluster")
-
-                clusterIndizes = [i for i in nBCountsOfClusterPoints.keys()]
-
-                # Get waypointCandidates
-                mean = sum(nBCountsOfClusterPoints.values()) / len(nBCountsOfClusterPoints)
-                waypointCandidateIndizes = [i for i in clusterIndizes if nBCountsOfClusterPoints[i] < mean * connectionDensityFactor]
-                if debug: plot.plot([points[i] for i in clusterIndizes], [-2 if i in waypointCandidateIndizes else -1 for i in clusterIndizes], title="Waypoint candidates")
-
-                # Cluster waypoints
-                waypointLabels = MyDBSCAN([points[i] for i in waypointCandidateIndizes], eps, minPts, detectWaypoints=False)
-                if debug: plot.plot([points[i] for i in waypointCandidateIndizes] + [points[i] for i in clusterIndizes if not i in waypointCandidateIndizes],
-                                    waypointLabels + [-1 for i in clusterIndizes if not i in waypointCandidateIndizes],
-                                    title="Waypoint clusters" )
-
-                waypointClusters = {}
-                for i in range(len(waypointCandidateIndizes)):
-                    if waypointLabels[i] == -1: continue
-                    if not waypointLabels[i] in waypointClusters: waypointClusters[waypointLabels[i]] = []
-                    waypointClusters[waypointLabels[i]].append(waypointCandidateIndizes[i])
-                # Remove waypointClusters
-                clusterID += removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndizes, waypointClusters, debug)
+            if debug: plot.plot(points, [-1 if i == 0 else i for i in labels], title="Basic DBScan detected a cluster")
+            if enableWaypointDetection:
+                clusterID += detectWaypoints(points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug)
             clusterID += 1
     return labels
+
+def detectWaypoints(points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug):
+
+
+    clusterIndizes = [i for i in nBCountsOfClusterPoints.keys()]
+
+    # Get waypointCandidates
+    mean = sum(nBCountsOfClusterPoints.values()) / len(nBCountsOfClusterPoints)
+    waypointCandidateIndizes = [i for i in clusterIndizes if
+                                nBCountsOfClusterPoints[i] < mean * connectionDensityFactor]
+    if len(waypointCandidateIndizes) == 0: return 0
+    if debug: plot.plot([points[i] for i in clusterIndizes],
+                        [-2 if i in waypointCandidateIndizes else -1 for i in clusterIndizes],
+                        title="Waypoint candidates")
+
+    # Cluster waypoints
+    waypointLabels = MyDBSCAN([points[i] for i in waypointCandidateIndizes], eps, minPts, enableWaypointDetection=False)
+    waypointClusters = {}
+    for i in range(len(waypointCandidateIndizes)):
+        if waypointLabels[i] == -1: continue
+        if not waypointLabels[i] in waypointClusters: waypointClusters[waypointLabels[i]] = []
+        waypointClusters[waypointLabels[i]].append(waypointCandidateIndizes[i])
+    if len(waypointClusters)==0: return 0
+    if debug: plot.plot([points[i] for i in waypointCandidateIndizes] + [points[i] for i in clusterIndizes if
+                                                                         not i in waypointCandidateIndizes],
+                        waypointLabels + [-1 for i in clusterIndizes if not i in waypointCandidateIndizes],
+                        title="Waypoint clusters")
+
+    return removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndizes, waypointClusters, debug)
 
 def removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndizes, waypointClusters, debug):
     newClustersFound = 0
@@ -94,7 +101,7 @@ def removeWaypoints(points, eps, minPts, clusterIndizes, waypointIndizes, labels
         else:
             preLabels.append(0)
 
-    newLabels = MyDBSCAN([points[i] for i in clusterIndizes], eps, minPts, detectWaypoints=False, labels=preLabels)
+    newLabels = MyDBSCAN([points[i] for i in clusterIndizes], eps, minPts, enableWaypointDetection=False, labels=preLabels)
     if (max(newLabels) > newClustersCount+1):  # a new cluster is found
         for i in range(len(newLabels)):
             if newLabels[i] > 1:  # is point of the new cluster
