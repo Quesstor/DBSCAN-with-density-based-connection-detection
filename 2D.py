@@ -7,6 +7,8 @@ import plot
 def generatePoints(x,y,offset=0.5,count=40):
     return np.array([(random.uniform(x-offset, x+offset), random.uniform(y-offset, y+offset)) for i in range(count)])
 
+test0 = np.concatenate([generatePoints(0,0), generatePoints(5,5), [(x,x) for x in np.arange(0,5,0.1)]])
+
 test1 = np.concatenate([generatePoints(0,0), generatePoints(4,0), generatePoints(-4,0), [(x,0) for x in np.arange(-4,4,0.2)],
                         [(-2,x) for x in np.arange(0,2,0.2)], [(2,x) for x in np.arange(0,2,0.2)], [(4,x) for x in np.arange(0,2,0.2)] ])
 
@@ -24,11 +26,11 @@ test4 = np.concatenate([
 ])
 outlier = np.array([(0,0),(0,5)])
 
-test = np.concatenate([test4, outlier])
+test = np.concatenate([test1, outlier])
 
 np.save("data", test)
 #test = np.load("data.npy")
-labels = dbscan.MyDBSCAN(test, eps=.5, minPts=3, debug=True)
+labels = dbscan.MyDBSCAN(test, eps=.4, minPts=3, debug=False)
 plot.plot(test, labels, False, "Final output", legend=True)
 print("done")
 

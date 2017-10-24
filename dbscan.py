@@ -28,7 +28,7 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableWaypointDet
                         NeighborPts = NeighborPts + PnNeighborPts
                 i += 1
 
-            if debug: plot.plot(points, [-1 if i == 0 else i for i in labels], title="Basic DBScan detected a cluster")
+            if debug: plot.plot(points, [-1 if i == 0 else i for i in labels], title="Basic DBScan detected a cluster", eps=eps)
             if enableWaypointDetection:
                 clusterID += detectWaypoints(points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug)
             clusterID += 1
