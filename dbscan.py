@@ -2,7 +2,7 @@ import numpy
 import plot
 import itertools
 
-def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableWaypointDetection=True, labels=[], debug = False):
+def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableChainpointDetection=True, labels=[], debug = False):
     clusterID = 1
     if(len(labels) == 0): labels = [0] * len(points)
 
@@ -29,87 +29,63 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableWaypointDet
                 i += 1
 
             if debug: plot.plot(points, [-1 if i == 0 else i for i in labels], title="Basic DBScan detected a cluster")
-            if enableWaypointDetection:
-                clusterID += detectWaypoints(points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug)
+            if enableChainpointDetection:
+                clusterID = detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug)
             clusterID += 1
     return labels
 
-def detectWaypoints(points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug):
-
-
+def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, currentClusterID, nBCountsOfClusterPoints, debug):
     clusterIndizes = [i for i in nBCountsOfClusterPoints.keys()]
 
-    # Get waypointCandidates
+    # Get chainpointCandidates
     mean = sum(nBCountsOfClusterPoints.values()) / len(nBCountsOfClusterPoints)
-    waypointCandidateIndizes = [i for i in clusterIndizes if
-                                nBCountsOfClusterPoints[i] < mean * connectionDensityFactor]
-    if len(waypointCandidateIndizes) == 0: return 0
+    chainpointCandidateIndizes = [i for i in clusterIndizes if nBCountsOfClusterPoints[i] < mean * connectionDensityFactor]
+    if len(chainpointCandidateIndizes) == 0: return 0
     if debug: plot.plot([points[i] for i in clusterIndizes],
-                        [-2 if i in waypointCandidateIndizes else -1 for i in clusterIndizes],
-                        title="Waypoint candidates")
+                        [-2 if i in chainpointCandidateIndizes else -1 for i in clusterIndizes],
+                        title="chainpoint candidates")
 
-    # Cluster waypoints
-    waypointLabels = MyDBSCAN([points[i] for i in waypointCandidateIndizes], eps, minPts, enableWaypointDetection=False)
-    waypointClusters = {}
-    for i in range(len(waypointCandidateIndizes)):
-        if waypointLabels[i] == -1: continue
-        if not waypointLabels[i] in waypointClusters: waypointClusters[waypointLabels[i]] = []
-        waypointClusters[waypointLabels[i]].append(waypointCandidateIndizes[i])
-    if len(waypointClusters)==0: return 0
-    if debug: plot.plot([points[i] for i in waypointCandidateIndizes] + [points[i] for i in clusterIndizes if
-                                                                         not i in waypointCandidateIndizes],
-                        waypointLabels + [-1 for i in clusterIndizes if not i in waypointCandidateIndizes],
-                        title="Waypoint clusters")
+    # Cluster chainpointCandidates
+    chainpointLabels = MyDBSCAN([points[i] for i in chainpointCandidateIndizes], eps, minPts, enableChainpointDetection=False)
+    chainpointClusters = {}
+    for i in range(len(chainpointCandidateIndizes)):
+        if chainpointLabels[i] == -1: continue
+        if not chainpointLabels[i] in chainpointClusters: chainpointClusters[chainpointLabels[i]] = []
+        chainpointClusters[chainpointLabels[i]].append(chainpointCandidateIndizes[i])
+    if len(chainpointClusters)==0: return 0
+    if debug: plot.plot([points[i] for i in chainpointCandidateIndizes] + [points[i] for i in clusterIndizes if not i in chainpointCandidateIndizes],
+                        chainpointLabels + [-1 for i in clusterIndizes if not i in chainpointCandidateIndizes],
+                        title="chainpoint clusters")
 
-    return removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndizes, waypointClusters, debug)
+    for c in chainpointClusters.values(): chainpointCandidateIndizes.extend(c)
 
-def removeWaypointClusters(points, eps, minPts, labels, clusterID, clusterIndizes, waypointClusters, debug):
-    newClustersFound = 0
-    remainingWaypointClusters = [i for i in waypointClusters.keys()]
-    numberOfClustersToRemove = 1
-    while numberOfClustersToRemove <= len(remainingWaypointClusters):
-        combinations = [x for x in itertools.combinations(remainingWaypointClusters, numberOfClustersToRemove)]
-        combinationIndex = 0
-        while combinationIndex < len(combinations):
-            if len(remainingWaypointClusters) == 0: break
-            keys = combinations[combinationIndex]
+    # Check chainpointClusters if they are indeed between two clusters
+    chainpoints = []
+    pointsWithoutChainClusterCandidates = [points[p] for p in clusterIndizes if not p in chainpointCandidateIndizes]
+    newClusterCount = max(MyDBSCAN(pointsWithoutChainClusterCandidates, eps, minPts, enableChainpointDetection=False))
+    for chainpointCluster in chainpointClusters.values():
+        scanningPoints = pointsWithoutChainClusterCandidates + [points[p] for p in chainpointCluster]
+        clustersCount = max(MyDBSCAN(scanningPoints, eps, minPts, enableChainpointDetection=False))
+        if clustersCount < newClusterCount: #chainPointCluster is indeed a connecting chain
+            chainpoints.extend(chainpointCluster)
+            for p in chainpointCluster: labels[p] =-2
 
-            waypoints = []
-            for k in keys: waypoints.extend(waypointClusters[k])
-            if removeWaypoints(points, eps, minPts, clusterIndizes, waypoints, labels, clusterID, newClustersFound,
-                               debug):
-                newClustersFound += 1
-                numberOfClustersToRemove = 1
-                for k in keys: remainingWaypointClusters.remove(k)
-                combinations = [x for x in itertools.combinations(remainingWaypointClusters, numberOfClustersToRemove)]
-                combinationIndex = 0
-            else:
-                combinationIndex += 1
-        numberOfClustersToRemove += 1
-    return newClustersFound
+            title ="Waypoint cluster found"
+        else: title ="Is not a waypoint cluster"
+        plot.plot(scanningPoints,
+                  ([0] * len(pointsWithoutChainClusterCandidates)) + ([-2] * len(chainpointCluster)),
+                  title=title)
 
-def removeWaypoints(points, eps, minPts, clusterIndizes, waypointIndizes, labels, clusterID, newClustersCount, debug=False):
-    if debug: plot.plot([points[i] for i in clusterIndizes],
-                        [-2 if i in waypointIndizes else -1 for i in clusterIndizes],
-                        title="Waypoints to remove")
+    # Label new clusters without chainpoints
+    indizesWithoutChainpoints = [p for p in clusterIndizes if not p in chainpoints]
+    newLabels = MyDBSCAN([points[p] for p in indizesWithoutChainpoints], eps, minPts, enableChainpointDetection=False)
+    for i in range(len(indizesWithoutChainpoints)):
+        p = indizesWithoutChainpoints[i]
+        if newLabels[i] == -1: labels[p] = -2
+        else: labels[p] = newLabels[i] + currentClusterID - 1
 
-    # prelabel Waypoints and check if a new Cluster emerges
-    preLabels = []
-    for i in range(len(clusterIndizes)):
-        if clusterIndizes[i] in waypointIndizes or labels[clusterIndizes[i]] == -2:
-            preLabels.append(-2)
-        else:
-            preLabels.append(0)
+    return currentClusterID + newClusterCount - 1
 
-    newLabels = MyDBSCAN([points[i] for i in clusterIndizes], eps, minPts, enableWaypointDetection=False, labels=preLabels)
-    if (max(newLabels) > newClustersCount+1):  # a new cluster is found
-        for i in range(len(newLabels)):
-            if newLabels[i] > 1:  # is point of the new cluster
-                labels[clusterIndizes[i]] = clusterID + newLabels[i] - 1
-            if newLabels[i] < 0: labels[clusterIndizes[i]] = -2  # is indeed a waypoint or a new outlier -> waypoint
-        if debug: plot.plot([points[i] for i in clusterIndizes], newLabels, title="A new cluster was found")
-        return True
-    return False
 
 def regionQuery(points, index, eps, labels):
     neighbors = []
