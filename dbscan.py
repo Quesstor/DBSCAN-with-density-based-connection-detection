@@ -2,9 +2,9 @@ import numpy
 import plot
 import itertools
 
-def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableChainpointDetection=True, labels=[], debug = False):
+def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableChainpointDetection=True, debug = False):
     clusterID = 1
-    if(len(labels) == 0): labels = [0] * len(points)
+    labels = [0] * len(points)
 
     for pIndex in range(len(points)):
         if labels[pIndex] != 0: continue
@@ -40,10 +40,10 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     # Get chainpointCandidates
     mean = sum(nBCountsOfClusterPoints.values()) / len(nBCountsOfClusterPoints)
     chainpointCandidateIndizes = [i for i in clusterIndizes if nBCountsOfClusterPoints[i] < mean * connectionDensityFactor]
-    if len(chainpointCandidateIndizes) == 0: return 0
+    if len(chainpointCandidateIndizes) == 0: return currentClusterID
     if debug: plot.plot([points[i] for i in clusterIndizes],
-                        [-2 if i in chainpointCandidateIndizes else -1 for i in clusterIndizes],
-                        title="chainpoint candidates")
+                        [-2 if i in chainpointCandidateIndizes else currentClusterID for i in clusterIndizes],
+                        title="Chainpoint candidates")
 
     # Cluster chainpointCandidates
     chainpointLabels = MyDBSCAN([points[i] for i in chainpointCandidateIndizes], eps, minPts, enableChainpointDetection=False)
@@ -52,11 +52,12 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
         if chainpointLabels[i] == -1: continue
         if not chainpointLabels[i] in chainpointClusters: chainpointClusters[chainpointLabels[i]] = []
         chainpointClusters[chainpointLabels[i]].append(chainpointCandidateIndizes[i])
-    if len(chainpointClusters)==0: return 0
+    if len(chainpointClusters)==0: return currentClusterID
     if debug: plot.plot([points[i] for i in chainpointCandidateIndizes] + [points[i] for i in clusterIndizes if not i in chainpointCandidateIndizes],
                         chainpointLabels + [-1 for i in clusterIndizes if not i in chainpointCandidateIndizes],
-                        title="chainpoint clusters")
+                        title="Chainpoint clusters")
 
+    chainpointCandidateIndizes = []
     for c in chainpointClusters.values(): chainpointCandidateIndizes.extend(c)
 
     # Check chainpointClusters if they are indeed between two clusters
@@ -70,21 +71,22 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
             chainpoints.extend(chainpointCluster)
             for p in chainpointCluster: labels[p] =-2
 
-            title ="Waypoint cluster found"
-        else: title ="Is not a waypoint cluster"
-        plot.plot(scanningPoints,
-                  ([0] * len(pointsWithoutChainClusterCandidates)) + ([-2] * len(chainpointCluster)),
+            title ="Chainpoint cluster found"
+        else: title ="Is not a chainpoint cluster"
+        if debug: plot.plot(scanningPoints,
+                  ([currentClusterID] * len(pointsWithoutChainClusterCandidates)) + ([-2] * len(chainpointCluster)),
                   title=title)
 
     # Label new clusters without chainpoints
     indizesWithoutChainpoints = [p for p in clusterIndizes if not p in chainpoints]
     newLabels = MyDBSCAN([points[p] for p in indizesWithoutChainpoints], eps, minPts, enableChainpointDetection=False)
+    if debug: plot.plot([points[p] for p in indizesWithoutChainpoints], newLabels, title="New clustering without chains")
     for i in range(len(indizesWithoutChainpoints)):
         p = indizesWithoutChainpoints[i]
         if newLabels[i] == -1: labels[p] = -2
         else: labels[p] = newLabels[i] + currentClusterID - 1
 
-    return currentClusterID + newClusterCount - 1
+    return currentClusterID + max(newLabels) - 1
 
 
 def regionQuery(points, index, eps, labels):
