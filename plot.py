@@ -12,13 +12,16 @@ def clusterColor(i, labelCount):
     norm = Normalize(vmin=0, vmax=labelCount+3)
     return cm.rainbow(norm(i))
 
-def plot(points, labels, writeIndex=False, title ="", legend=False):
+def plot(points, labels, writeIndex=False, title ="", legend=False, eps=0):
     points = np.array(points)
     labels = np.array(labels)
     labelsCount = max(labels)
 
     colors = [clusterColor(i,labelsCount) for i in labels]
     matplotlib.pyplot.scatter([x for x,y in points],[y for x,y in points], color=colors)
+    if eps>0:
+        ax = plt.gca()
+        ax.add_artist(plt.Circle((0,0), eps, color='black', fill=False))
     if writeIndex:
         for i,p in enumerate(points): matplotlib.pyplot.annotate(i, (p[0], p[1]))
 
