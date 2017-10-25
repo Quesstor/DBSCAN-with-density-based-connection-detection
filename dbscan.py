@@ -45,7 +45,7 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
                         [-2 if i in chainpointCandidateIndizes else currentClusterID for i in clusterIndizes],
                         title="Chainpoint candidates")
 
-    # Add new outlier to chainpaintCandidates
+    # Add new outlier to chainpointCandidates
     indizesWithoutCandidates = [i for i in clusterIndizes if i not in chainpointCandidateIndizes]
     newLabes = MyDBSCAN([points[i] for i in indizesWithoutCandidates], eps, minPts, enableChainpointDetection=False)
     if debug:
@@ -70,7 +70,7 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     chainpointCandidateIndizes = []
     for c in chainpointClusters.values(): chainpointCandidateIndizes.extend(c)
 
-    # Check chainpointClusters if they are indeed between two clusters
+    # Check chainpointClusters by if two clusters merge in the union of chainpointCluster and pointsWithoutChainClusterCandidates
     chainpoints = []
     pointsWithoutChainClusterCandidates = [points[p] for p in clusterIndizes if not p in chainpointCandidateIndizes]
     labelsWithoutChainClusterCandidates = MyDBSCAN(pointsWithoutChainClusterCandidates, eps, minPts, enableChainpointDetection=False)
@@ -94,7 +94,7 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     if debug: plot.plot([points[p] for p in indizesWithoutChainpoints], newLabels, title="New clustering without chains")
     for i in range(len(indizesWithoutChainpoints)):
         p = indizesWithoutChainpoints[i]
-        if newLabels[i] == -1: labels[p] = -2 #new outlier can only occur between chainpoints -> is chanepoint
+        if newLabels[i] == -1: labels[p] = -2 #new outliers can only occur between chainpoints -> is chanepoint
         else: labels[p] = newLabels[i] + currentClusterID - 1
 
     return currentClusterID + max(newLabels) - 1
