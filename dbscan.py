@@ -5,6 +5,7 @@ import itertools
 def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableChainpointDetection=True, debug = False):
     clusterID = 1
     labels = [0] * len(points)
+    if(debug): plot.plot(points, [-1]*len(points), eps=eps, title="Data for DBSCAN with eps="+str(eps)+" and minPts="+str(minPts))
 
     for pIndex in range(len(points)):
         if labels[pIndex] != 0: continue
@@ -13,7 +14,7 @@ def MyDBSCAN(points, eps, minPts, connectionDensityFactor=0.5, enableChainpointD
         else:
             labels[pIndex] = clusterID
 
-            nBCountsOfClusterPoints = {} #This saves the # of Neighbours for each point in cluster
+            nBCountsOfClusterPoints = {} #This saves the # of Neighbors for each point in cluster
             nBCountsOfClusterPoints[pIndex] = len(NeighborPts)
 
             # Expand Cluster
@@ -43,14 +44,16 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     if len(chainpointCandidateIndizes) == 0: return currentClusterID
     if debug: plot.plot([points[i] for i in clusterIndizes],
                         [-2 if i in chainpointCandidateIndizes else currentClusterID for i in clusterIndizes],
-                        title="Chainpoint candidates")
+                        title="Chainpoint candidates = Points with less than "+str(connectionDensityFactor)+"*(mean Neighbors) Neighbors",
+                        eps=eps,
+                        text=[nBCountsOfClusterPoints[i] for i in clusterIndizes])
 
     # Add new outlier to chainpointCandidates
     indizesWithoutCandidates = [i for i in clusterIndizes if i not in chainpointCandidateIndizes]
     newLabes = MyDBSCAN([points[i] for i in indizesWithoutCandidates], eps, minPts, enableChainpointDetection=False)
     if debug:
         if -1 in newLabes:
-            plot.plot([points[i] for i in indizesWithoutCandidates],newLabes,title="New outlier")
+            plot.plot([points[i] for i in indizesWithoutCandidates],newLabes,title="Clustering cluster without candidates. New outliers are added to chainpoint candidates")
     for i in range(len(newLabes)):
         if newLabes[i] == -1:
             chainpointCandidateIndizes.append(indizesWithoutCandidates[i])
@@ -63,12 +66,14 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
         if not chainpointLabels[i] in chainpointClusters: chainpointClusters[chainpointLabels[i]] = []
         chainpointClusters[chainpointLabels[i]].append(chainpointCandidateIndizes[i])
     if len(chainpointClusters)==1: return currentClusterID
-    if debug: plot.plot([points[i] for i in chainpointCandidateIndizes] + [points[i] for i in clusterIndizes if not i in chainpointCandidateIndizes],
-                        chainpointLabels + [-1 for i in clusterIndizes if not i in chainpointCandidateIndizes],
-                        title="Chainpoint clusters")
+    if debug: plot.plot([points[i] for i in chainpointCandidateIndizes],
+                        chainpointLabels,
+                        title="Chainpoint candidates clusters. Outliers are removed from chainpoint candidates")
 
+    if -1 in chainpointClusters: del chainpointClusters[-1] #chainpoint outliers can not be part of chains
     chainpointCandidateIndizes = []
-    for c in chainpointClusters.values(): chainpointCandidateIndizes.extend(c)
+    for c in chainpointClusters.values():
+        chainpointCandidateIndizes.extend(c)
 
     # Check chainpointClusters by if two clusters merge in the union of chainpointCluster and pointsWithoutChainClusterCandidates
     chainpoints = []

@@ -12,21 +12,26 @@ def clusterColor(i, labelCount):
     norm = Normalize(vmin=0, vmax=labelCount+3)
     return cm.rainbow(norm(i))
 
-def plot(points, labels, writeIndex=False, title ="", legend=False, eps=0):
+def plot(points, labels, writeIndex=False, title ="", legend=False, eps=0, text=[]):
     points = np.array(points)
     labels = np.array(labels)
     labelsCount = max(labels)
 
     colors = [clusterColor(i,labelsCount) for i in labels]
+    matplotlib.pyplot.figure(figsize=(10, 7))
+    matplotlib.pyplot.subplots_adjust(left=0.035, right=0.99, top=0.95, bottom=0.03)
     matplotlib.pyplot.scatter([x for x,y in points],[y for x,y in points], color=colors)
     if eps>0:
         ax = plt.gca()
-        ax.add_artist(plt.Circle((0,0), eps, color='black', fill=False))
+        ax.add_artist(plt.Circle((1.8,2), eps, color='red', fill=False))
     if writeIndex:
         for i,p in enumerate(points): matplotlib.pyplot.annotate(i, (p[0], p[1]))
-
+    if len(text)>0:
+        ax = plt.gca()
+        for i, txt in enumerate(text):
+            ax.annotate(txt, (points[i][0], points[i][1]))
     if legend:
-        red_patch = mpatches.Patch(color='red', label='Connecting points')
+        red_patch = mpatches.Patch(color='red', label='Chainpoints')
         black_patch = mpatches.Patch(color='black', label='Noise')
         plt.legend(handles=[red_patch, black_patch])
 
