@@ -2,8 +2,9 @@ import numpy as np
 import random
 import plot
 import DBSCAN
-import detection.lowdensitychains
+import detection.density
 import detection.trimming
+import detection.pca
 
 def generatePoints(x, y, offset=0.5, count=40):
     return np.array([(random.uniform(x - offset, x + offset), random.uniform(y - offset, y + offset)) for i in range(count)])
@@ -42,7 +43,7 @@ def problem1():
                            [(x, x - .2) for x in np.arange(-1, 4, 0.15)], ])
 
 def problem2():
-    return np.concatenate([generatePoints(1, 1, count=100), generatePoints(3, 3, count=100), [(x, x) for x in np.arange(1.2, 2.8, 0.03)]])
+    return np.concatenate([generatePoints(1, 1, count=50), generatePoints(3, 3, count=50), [(x, x) for x in np.arange(1.5, 2.5, 0.03)]])
 
 # All tests
 def test4():
@@ -61,11 +62,11 @@ def test4():
                         [(8, x) for x in np.arange(4, 8, 0.25)]
                         ])
 
-test = test1()
+test = problem2()
 
 #np.save("data", test)
 #test = np.load("example.npy")
 
-labels = DBSCAN.Algorithm(test, .6, 3, detection.lowdensitychains.detectChainpoints, True)
+labels = DBSCAN.Algorithm(test, .3, 3, clusterFoundFunction=detection.pca.detectChainpoints, debug=False )
 plot.plot(test, labels, False, "Final output", legend=True)
 print("done")
