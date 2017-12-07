@@ -1,51 +1,11 @@
 import numpy
 import plot
 import itertools
+import DBSCAN
 
+def detectChainpoints(points, eps, minPts, labels, currentClusterID, nBCountsOfClusterPoints, debug):
+    connectionDensityFactor = 0.5
 
-def Algorithm(points, eps, minPts, connectionDensityFactor=0.5, enableChainpointDetection=True, debug=False):
-    clusterID = 1
-    labels = [0] * len(points)
-    if(debug):
-        plot.plot(points, [-1] * len(points), eps=eps,
-                  title="Data for DBSCAN with eps=" + str(eps) + " and minPts=" + str(minPts))
-
-    for pIndex in range(len(points)):
-        if labels[pIndex] != 0:
-            continue
-        NeighborPts = regionQuery(points, pIndex, eps)
-        if len(NeighborPts) < minPts:
-            labels[pIndex] = -1  # Outlier
-        else:
-            labels[pIndex] = clusterID
-
-            # This saves the # of Neighbors for each point in cluster
-            nBCountsOfClusterPoints = {}
-            nBCountsOfClusterPoints[pIndex] = len(NeighborPts)
-
-            # Expand Cluster
-            i = 0
-            while i < len(NeighborPts):
-                neighborIndex = NeighborPts[i]
-                if labels[neighborIndex] == 0 or labels[neighborIndex] == -1:
-                    labels[neighborIndex] = clusterID
-                    PnNeighborPts = regionQuery(points, neighborIndex, eps)
-                    nBCountsOfClusterPoints[neighborIndex] = len(PnNeighborPts)
-                    if len(PnNeighborPts) >= minPts:
-                        NeighborPts = NeighborPts + PnNeighborPts
-                i += 1
-
-            if debug:
-                plot.plot(points, [-1 if i == 0 else i for i in labels],
-                          title="Basic DBScan detected a cluster")
-            if enableChainpointDetection:
-                clusterID = detectChainpoints(
-                    points, eps, minPts, connectionDensityFactor, labels, clusterID, nBCountsOfClusterPoints, debug)
-            clusterID += 1
-    return labels
-
-
-def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, currentClusterID, nBCountsOfClusterPoints, debug):
     clusterIndizes = [i for i in nBCountsOfClusterPoints.keys()]
 
     # Get chainpointCandidates
@@ -65,8 +25,7 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     # Add new outlier to chainpointCandidates
     indizesWithoutCandidates = [
         i for i in clusterIndizes if i not in chainpointCandidateIndizes]
-    newLabes = Algorithm([points[i] for i in indizesWithoutCandidates],
-                         eps, minPts, enableChainpointDetection=False)
+    newLabes = DBSCAN.Algorithm([points[i] for i in indizesWithoutCandidates], eps, minPts)
     if debug:
         if -1 in newLabes:
             plot.plot([points[i] for i in indizesWithoutCandidates], newLabes,
@@ -76,8 +35,7 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
             chainpointCandidateIndizes.append(indizesWithoutCandidates[i])
 
     # Cluster chainpointCandidates
-    chainpointLabels = Algorithm(
-        [points[i] for i in chainpointCandidateIndizes], eps, minPts, enableChainpointDetection=False)
+    chainpointLabels = DBSCAN.Algorithm([points[i] for i in chainpointCandidateIndizes], eps, minPts)
     chainpointClusters = {}
     for i in range(len(chainpointCandidateIndizes)):
         # if chainpointLabels[i] == -1: continue
@@ -103,14 +61,12 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     chainpoints = []
     pointsWithoutChainClusterCandidates = [
         points[p] for p in clusterIndizes if not p in chainpointCandidateIndizes]
-    labelsWithoutChainClusterCandidates = Algorithm(
-        pointsWithoutChainClusterCandidates, eps, minPts, enableChainpointDetection=False)
+    labelsWithoutChainClusterCandidates = DBSCAN.Algorithm(pointsWithoutChainClusterCandidates, eps, minPts)
     newClusterCount = max(labelsWithoutChainClusterCandidates)
     for chainpointCluster in chainpointClusters.values():
         scanningPoints = pointsWithoutChainClusterCandidates + \
             [points[p] for p in chainpointCluster]
-        clustersCount = max(Algorithm(scanningPoints, eps,
-                                      minPts, enableChainpointDetection=False))
+        clustersCount = max(DBSCAN.Algorithm(scanningPoints, eps, minPts))
         if clustersCount < newClusterCount:  # chainPointCluster is indeed a connecting chain
             chainpoints.extend(chainpointCluster)
             for p in chainpointCluster:
@@ -128,8 +84,7 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
     # Label new clusters without chainpoints
     indizesWithoutChainpoints = [
         p for p in clusterIndizes if not p in chainpoints]
-    newLabels = Algorithm([points[p] for p in indizesWithoutChainpoints],
-                          eps, minPts, enableChainpointDetection=False)
+    newLabels = DBSCAN.Algorithm([points[p] for p in indizesWithoutChainpoints], eps, minPts)
     if debug:
         plot.plot([points[p] for p in indizesWithoutChainpoints],
                   newLabels, title="New clustering without chains")
@@ -142,11 +97,3 @@ def detectChainpoints(points, eps, minPts, connectionDensityFactor, labels, curr
             labels[p] = newLabels[i] + currentClusterID - 1
 
     return currentClusterID + max(newLabels) - 1
-
-
-def regionQuery(points, index, eps):
-    neighbors = []
-    for p in range(len(points)):
-        if p != index and numpy.linalg.norm(points[index] - points[p]) < eps:
-            neighbors.append(p)
-    return neighbors
