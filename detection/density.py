@@ -59,8 +59,7 @@ def detectChainpoints(points, eps, minPts, labels, currentClusterID, nBCountsOfC
 
     # Check chainpointClusters by if two clusters merge in the union of chainpointCluster and pointsWithoutChainClusterCandidates
     chainpoints = []
-    pointsWithoutChainClusterCandidates = [
-        points[p] for p in clusterIndizes if not p in chainpointCandidateIndizes]
+    pointsWithoutChainClusterCandidates = [points[p] for p in clusterIndizes if not p in chainpointCandidateIndizes]
     labelsWithoutChainClusterCandidates = DBSCAN.Algorithm(pointsWithoutChainClusterCandidates, eps, minPts)
     newClusterCount = max(labelsWithoutChainClusterCandidates)
     for chainpointCluster in chainpointClusters.values():

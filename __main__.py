@@ -62,11 +62,11 @@ def test4():
                         [(8, x) for x in np.arange(4, 8, 0.25)]
                         ])
 
-test = problem2()
+test = test0()
 
 #np.save("data", test)
-#test = np.load("example.npy")
+test = np.load("example.npy")
 
-labels = DBSCAN.Algorithm(test, .3, 3, clusterFoundFunction=detection.pca.detectChainpoints, debug=False )
+labels = DBSCAN.Algorithm(test, .6, 3, clusterFoundFunction=detection.pca.detectChainpoints, debug=False)
 plot.plot(test, labels, False, "Final output", legend=True)
 print("done")
