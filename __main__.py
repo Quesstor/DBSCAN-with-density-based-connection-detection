@@ -1,7 +1,6 @@
 if __name__ == '__main__':
     import plot
     import detection.density
-    import detection.trimming
     import detection.pca
     import json
     import testdata
