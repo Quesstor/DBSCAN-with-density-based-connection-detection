@@ -1,0 +1,6 @@
+data/
+*.pyc
+test/
+plots/
+.vscode
+__pycache__
