@@ -4,3 +4,4 @@ test/
 plots/
 .vscode
 __pycache__
+*.csv

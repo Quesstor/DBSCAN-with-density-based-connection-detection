@@ -24,7 +24,7 @@ def calculateError(i, points, dimensions, chainDim, NearestNeighborsCalculator):
     indicatorValues = eigenValuesNormed[-(dimensions-chainDim):]
     indicator = sum(indicatorValues) 
     indicatorNormed = indicator * (dimensions / (dimensions-chainDim))  #is between 1 and 0: 
-                                                                        #1 = perfect distribution of nbhs in all dimensions, 
+                                                                        #1 = perfect distribution of nbs in all dimensions, 
                                                                         #0 = all neighbours in hyperplane
     return indicatorNormed
 
@@ -71,21 +71,23 @@ def detectChainpoints(points, eps, minPts, chainDim=1, allowedVar=0.2, eps2=0, d
 
     candidates = [index for index,normedError in enumerate(normedErrors) if normedError <= allowedVar]
     if len(candidates) == len(points) or len(candidates) == 0: return labels
-    if debug: plot.plot(points, [0 if i in candidates else -1 for i in clusterIndizes], title="Chainpoint candidates")
+    if debug: plot.plot(points, [1 if i in candidates else -1 for i in clusterIndizes], title="Chainpoint candidates")
 
     #Cluster remaining points
+    if debug: print("Refining chain-point candidates: Cluster remaining points")
     remainingPoints = [i for i in clusterIndizes if not i in candidates]
     remainingPointsLabels = DBSCAN.fit([points[i] for i in remainingPoints]).labels_
-    if debug: plot.plot([points[i] for i in remainingPoints], [0 if l==-1 else -1 for l in remainingPointsLabels], title="Refining chainpoints: Remaining points clustered, Outliers are added to candidates")
-    if(max(remainingPointsLabels)) == 0: return labels #It is not possible to find new Clusters by removing chains
+    if debug: plot.plot([points[i] for i in remainingPoints], [1 if l==-1 else -1 for l in remainingPointsLabels], title="Refining chainpoints: Remaining points clustered, Outliers are added to candidates")
+    if(max(remainingPointsLabels)) == 0: return labels 
     for i,index in enumerate(remainingPoints): 
         if remainingPointsLabels[i] == -1: candidates.append(index) #Add outliers to candidates
     remainingPoints = [i for i in clusterIndizes if not i in candidates] #Rebuild remaining points because candidates were added
     if len(remainingPoints) == 0: return labels
 
     #Cluster Candidates
+    if debug: print("Refining chain-point candidates: Cluster Candidates")
     candidateLabels = DBSCAN.fit([points[i] for i in candidates]).labels_
-    if debug: plot.plot([points[i] for i in candidates], [0 if l==-1 else -1 for l in candidateLabels], title="Refining chainpoints: Chainpoint candidates clustered, Outliers are removed from candidates")
+    if debug: plot.plot([points[i] for i in candidates], [1 if l==-1 else -1 for l in candidateLabels], title="Refining chainpoints: Chainpoint candidates clustered, Outliers are removed from candidates")
     for i,label in enumerate(candidateLabels):
         if label==-1: 
             remainingPoints.append(candidates[i]) #Add outlier to remainingPoints
