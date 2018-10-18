@@ -16,3 +16,6 @@ For more explanations and examples see Thesis.pdf
 The dataset was downloaded on February the 27th 2018 from https://www.kaggle.com/daveianhickey/2000-16-traffic-flow-england-scotland-wales/data. 
 The license for this dataset is the Open Government Licence used by all data on data.gov.uk (http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/). 
 The raw datasets are available from the UK Department of Transport website https://www.dft.gov.uk/traffic-counts/download.php
+
+# Usage
+See Algorithm/EXAMPLE.py for an example usage.
