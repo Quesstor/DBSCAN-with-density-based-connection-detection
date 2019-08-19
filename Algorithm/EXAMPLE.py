@@ -2,39 +2,39 @@ if __name__ == '__main__':
     import chaindetection
     import plot
     import dataloader
-    from sklearn.cluster import DBSCAN
+    from scipy.cluster.hierarchy import single, fcluster, dendrogram
+    from scipy.spatial.distance import pdist
+    from sklearn.cluster import DBSCAN, KMeans, MeanShift
 
-    #Load data
-    points = dataloader.loadcsv()
+    # Load data
+    points, labels = dataloader.random2cluster(.3, .05, .05)
 
-    #Set params
-    eps = .01
-    minPts = 15
+    # Set params
+    eps = .3
+    allowedVar = .5
 
-    #Cluster points with DBSCAN
-    labels = DBSCAN(eps=.01, min_samples=15).fit(points).labels_
-    currentClusterID = max(labels)+1
+    # Cluster points with DBSCAN
+    def DBSCANclustering(points):
+        return DBSCAN(eps=eps, min_samples=2).fit(points).labels_
 
-    #For each cluster 
-    for cluster in range(0, currentClusterID):
-        clusterpointindizes, clusterpoints = zip(*[(i,x) for i,x in enumerate(points) if labels[i]==cluster])
+    def hierarchyCluster(points):
+        y = pdist([p for p in points])
+        Z = single(y)
+        return fcluster(Z, eps, criterion='distance')
 
-        #Apply chaindetection
-        #Signature: detectChainpoints(points, eps, minPts, chainDim=1, allowedVar=0.2, eps2=0, debug=False, makeChainClusters=True)
-        #   points              - The points on which the chaindetection is applied
-        #   eps                 - epsilon value of the overlying DBSCAN
-        #   minPts              - minPts parameter of the overlying DBSCAN
-        #   chainDim            - The dimensionality of chains the user wants to detect (default = 1)
-        #   allowedVar          - in [0,1[ The allowed variation of chains (default = 0.2)
-        #   eps2                - The epsilon value to determine the range of range queries when calculating the normed error. If set to 0 eps2 will be set to eps (default = 0)
-        #   debug               - Enable this to get a lot of plots and console outputs on how the algorithm works (default = False)
-        #   makeChainClusters   - Enable this to assign chains to a new cluster (default = True)
-        clusterlabels = chaindetection.detectChainpoints(clusterpoints, eps, minPts, debug=True)
+    def KMeansClustering(points):
+        return KMeans(n_clusters=6, random_state=0).fit(points).labels_
 
-        #Update labels
-        for i,pointindex in enumerate(clusterpointindizes):
-            if clusterlabels[i] > 0: labels[pointindex] = currentClusterID + clusterlabels[i] - 1
-            if clusterlabels[i] == -2: labels[pointindex] = -2
-        currentClusterID += max(clusterlabels)
+    def meanShiftClustering(points):
+        return MeanShift(bandwidth=20).fit(points).labels_
 
-    plot.plot(points, labels, title="Final output", randomcolor=True, dotSize=5)
+    clusteringAlgo = hierarchyCluster
+    labels = clusteringAlgo(points)
+    plot.plot(points, labels, randomcolor=True, title="ClusteringAlgo results")
+    #a,b = (zip(*[(i, x) for i, x in enumerate(points) if labels[i] == 0]))
+
+    labelsCD = chaindetection.chainDetection(
+        points, [l for l in labels], eps, allowedVar, clusteringAlgo, chainDim=1)
+
+    plot.plot(points, labelsCD, title="Final output",
+              randomcolor=True, dotSize=5)
