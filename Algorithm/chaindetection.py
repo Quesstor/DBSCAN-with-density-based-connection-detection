@@ -109,6 +109,7 @@ def chainDetectionOnCluster(points, eps, chainDim=1, allowedVar=0.2, debug=False
         return labels
 
     # Cluster Candidates
+    if len(candidates) <= 1: return labels
     if debug:
         print("Refining chain-point candidates: Cluster Candidates")
     candidateLabels = runClusteringAlgo([points[i] for i in candidates], clusteringAlgo)
